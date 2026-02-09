@@ -5,3 +5,4 @@ torch
 streamlit
 plotly
 joblib
+pillow

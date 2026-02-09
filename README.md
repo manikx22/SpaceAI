@@ -1,55 +1,69 @@
 # SpaceOps AI
 
-SpaceOps AI is an end-to-end AI system that predicts satellite-like faults from telemetry time-series data and recommends self-healing actions through a Streamlit dashboard.
+SpaceOps AI is a hackathon-ready AI mission assistant that predicts satellite-like faults from telemetry time series and recommends corrective actions in a live Streamlit mission dashboard.
 
-## Overview
+## Why This Project
 
-The project uses NASA CMAPSS turbofan data (or synthetic fallback telemetry) as a proxy for satellite subsystem telemetry.
+Satellite operations teams need early warning and clear actions, not just raw telemetry. SpaceOps AI combines:
+- Anomaly detection (Autoencoder + Isolation Forest fallback)
+- Failure progression modeling (LSTM RUL prediction)
+- Rule-based recommendation logic
+- A mission-control style dashboard with live tracking
 
-Core capabilities:
-- Data pipeline: load, normalize, label RUL, generate LSTM windows
-- Anomaly detection: PyTorch autoencoder with IsolationForest fallback
-- Failure prediction: PyTorch LSTM for Remaining Useful Life (RUL)
-- Recommendation engine: rule-based corrective actions with confidence
-- Dashboard: live telemetry visualization, anomaly alerts, failure risk, recommendations, and simulated mission cost savings
+## Key Features
 
-## Architecture
+- CMAPSS-compatible preprocessing pipeline with synthetic fallback
+- RUL label generation + sliding window sequence builder
+- PyTorch anomaly autoencoder training pipeline
+- PyTorch LSTM failure predictor with validation metrics
+- Streamlit dashboard with:
+  - Health status and AI risk panel
+  - Live/Replay/Prediction telemetry tabs
+  - Recommendation console with urgency tag
+  - Mission impact simulation
+  - Live satellite tracking + local satellite images
+- Dark mode optimized UI
 
-- `preprocess.py`: data ingestion, synthetic fallback generation, MinMax scaling, RUL/sequence creation
-- `train_anomaly.py`: autoencoder anomaly model training and fallback isolation forest
-- `train_lstm.py`: LSTM RUL regression training and evaluation metrics
-- `recommendation_engine.py`: self-healing rule evaluation
-- `app.py`: Streamlit UI and real-time inference panel
-- `config.py`: central paths, thresholds, and hyperparameters
+## Tech Stack
 
-## Project Structure
+- Python, Pandas, NumPy, scikit-learn
+- PyTorch
+- Streamlit + Plotly
+- Joblib
 
+## Repository Structure
+
+```text
+.
+├── .github/
+│   ├── workflows/
+│   └── ISSUE_TEMPLATE/
+├── data/
+│   ├── raw/
+│   └── processed/          # runtime artifacts (ignored)
+├── docs/
+├── models/                 # runtime artifacts (ignored)
+├── tests/
+├── utils/
+├── app.py
+├── config.py
+├── preprocess.py
+├── recommendation_engine.py
+├── train_anomaly.py
+├── train_lstm.py
+├── requirements.txt
+└── README.md
 ```
-spaceops_ai/
-├ data/
-│  ├ raw/
-│  └ processed/
-├ models/
-├ training/
-├ dashboard/
-├ utils/
-├ app.py
-├ train_anomaly.py
-├ train_lstm.py
-├ preprocess.py
-├ recommendation_engine.py
-├ config.py
-├ requirements.txt
-└ README.md
-```
 
-## Setup
+## Quick Start
+
+### 1) Install
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-## Run Training
+### 2) Train models
 
 ```bash
 python preprocess.py
@@ -57,29 +71,57 @@ python train_anomaly.py
 python train_lstm.py
 ```
 
-Notes:
-- To use NASA CMAPSS real data, place `train_FD001.txt` in `data/raw/`.
-- If CMAPSS is missing, synthetic telemetry is generated automatically.
-
-## Launch Dashboard
+### 3) Run dashboard
 
 ```bash
-streamlit run app.py
+streamlit run app.py --server.address 127.0.0.1 --server.port 8501
 ```
 
-## Output Artifacts
+Open: [http://127.0.0.1:8501](http://127.0.0.1:8501)
 
-- Processed data: `data/processed/telemetry_processed.csv`
-- Scaler: `data/processed/telemetry_scaler.joblib`
-- LSTM windows: `data/processed/lstm_X.npy`, `data/processed/lstm_y.npy`
-- Anomaly model: `models/anomaly_autoencoder.pt`
-- Fallback anomaly model: `models/anomaly_iforest.joblib`
-- Failure model: `models/lstm_failure_model.pt`
+## Data
 
-## Expected Dashboard Panels
+Default behavior:
+- Looks for CMAPSS train file in `data/raw/`
+- If missing, generates realistic synthetic telemetry automatically
 
-1. Satellite Status (`HEALTHY / WARNING / CRITICAL`)
-2. Telemetry Visualization (Temperature, Voltage, Vibration)
-3. AI Prediction Panel (Failure Risk, Predicted RUL, Anomaly Score)
-4. Recommendation Panel (Action + Confidence)
-5. Mission Cost Saved (simulated counter)
+Supported CMAPSS filenames:
+- `data/raw/train_FD001.txt`
+- `data/raw/FD001.txt`
+- `data/raw/CMAPSSData/train_FD001.txt`
+
+## Model Outputs
+
+Generated artifacts:
+- `data/processed/telemetry_processed.csv`
+- `data/processed/telemetry_scaler.joblib`
+- `data/processed/lstm_X.npy`
+- `data/processed/lstm_y.npy`
+- `models/anomaly_autoencoder.pt`
+- `models/anomaly_iforest.joblib`
+- `models/lstm_failure_model.pt`
+
+## CI
+
+GitHub Actions workflow (`.github/workflows/ci.yml`) validates:
+- Python setup
+- Dependency install
+- Syntax compile check
+- Unit tests
+
+## Hackathon Notes
+
+- Runtime artifacts (`data/processed`, `models`) are intentionally gitignored.
+- Dashboard satellite images are generated locally in `data/processed/ui_assets/` at runtime.
+- Live tracking currently uses a deterministic synthetic orbital track model for demo consistency.
+
+## Future Improvements
+
+- Real orbital propagation (TLE + SGP4/Skyfield)
+- Better LSTM feature engineering and sequence split strategy
+- Containerized deployment (Docker)
+- Experiment tracking (MLflow/W&B)
+
+## License
+
+This project is released under the MIT License. See `LICENSE`.
