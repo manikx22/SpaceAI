@@ -32,3 +32,8 @@
 - Missing CMAPSS dataset => synthetic telemetry generation
 - Missing anomaly autoencoder => fallback to IsolationForest
 - Missing LSTM model => RUL displays as unavailable
+
+5. `utils/orbit_tracking.py`
+- Fetches TLE from CelesTrak for a NORAD ID
+- Computes live satellite subpoint and speed via Skyfield
+- Falls back safely when network/dependency is unavailable

@@ -4,21 +4,19 @@ from __future__ import annotations
 
 import time
 from datetime import datetime, timezone
-from pathlib import Path
-
 import joblib
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 import torch
-from PIL import Image, ImageDraw
 from torch import nn
 
 import config
 import preprocess
 from recommendation_engine import generate_recommendation
 from train_lstm import LSTMRegressor
+from utils.orbit_tracking import get_live_orbit_state
 
 
 class Autoencoder(nn.Module):
@@ -146,10 +144,19 @@ def compute_ground_track(cycles: np.ndarray, unit_id: int) -> tuple[np.ndarray, 
     return lat, lon
 
 
-def tracking_map(cycles: np.ndarray, unit_id: int, template: str) -> go.Figure:
+def tracking_map(
+    cycles: np.ndarray,
+    unit_id: int,
+    template: str,
+    lat_override: np.ndarray | None = None,
+    lon_override: np.ndarray | None = None,
+) -> go.Figure:
     """Render live ground track map with current position marker."""
-    lat, lon = compute_ground_track(cycles, unit_id)
-    trail_len = min(90, len(cycles))
+    if lat_override is not None and lon_override is not None and len(lat_override) > 0 and len(lon_override) > 0:
+        lat, lon = lat_override, lon_override
+    else:
+        lat, lon = compute_ground_track(cycles, unit_id)
+    trail_len = min(90, len(cycles), len(lat), len(lon))
 
     fig = go.Figure()
     fig.add_trace(
@@ -289,48 +296,20 @@ def risk_gauge(risk: float, template: str, number_color: str, threshold_color: s
     return fig
 
 
-def ensure_satellite_images() -> dict[str, Path]:
-    """Create local satellite illustration images to guarantee display availability."""
-    out_dir = config.PROCESSED_DATA_DIR / "ui_assets"
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    specs = {
-        "LEO Satellite": ("leo_satellite.png", (14, 22, 38), (56, 189, 248)),
-        "Earth Observation": ("earth_observation_satellite.png", (8, 24, 34), (45, 212, 191)),
-        "Deep Space Probe": ("deep_space_probe.png", (20, 18, 40), (251, 146, 60)),
+def get_real_satellite_catalog() -> dict[str, dict[str, str | int]]:
+    """Curated real satellites with NORAD IDs and real image sources."""
+    return {
+        "ISS (ZARYA)": {
+            "norad": 25544,
+            "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/d0/International_Space_Station_after_undocking_of_STS-132.jpg",
+            "credit": "NASA / Wikimedia Commons",
+        },
+        "Hubble Space Telescope": {
+            "norad": 20580,
+            "image_url": "https://upload.wikimedia.org/wikipedia/commons/3/3f/HST-SM4.jpeg",
+            "credit": "NASA / Wikimedia Commons",
+        },
     }
-
-    paths: dict[str, Path] = {}
-    for label, (name, bg, accent) in specs.items():
-        path = out_dir / name
-        paths[label] = path
-        if path.exists():
-            continue
-
-        img = Image.new("RGB", (960, 540), bg)
-        draw = ImageDraw.Draw(img)
-
-        # Star field
-        rng = np.random.default_rng(abs(hash(name)) % (2**32))
-        for _ in range(320):
-            x = int(rng.integers(0, 960))
-            y = int(rng.integers(0, 540))
-            r = int(rng.integers(1, 3))
-            c = int(rng.integers(170, 255))
-            draw.ellipse((x - r, y - r, x + r, y + r), fill=(c, c, c))
-
-        # Simple satellite body + panels
-        draw.rectangle((420, 230, 540, 320), fill=(210, 218, 230), outline=(20, 30, 45), width=3)
-        draw.rectangle((300, 245, 410, 305), fill=accent, outline=(20, 30, 45), width=3)
-        draw.rectangle((550, 245, 660, 305), fill=accent, outline=(20, 30, 45), width=3)
-        draw.ellipse((465, 200, 495, 230), fill=(250, 250, 252), outline=(20, 30, 45), width=3)
-        draw.line((480, 200, 480, 155), fill=(220, 226, 236), width=4)
-        draw.ellipse((468, 140, 492, 164), fill=accent)
-
-        draw.text((26, 26), f"SpaceOps AI | {label}", fill=(220, 230, 240))
-        img.save(path)
-
-    return paths
 
 
 def inject_css() -> None:
@@ -461,7 +440,7 @@ def inject_css() -> None:
 def main() -> None:
     st.set_page_config(page_title="SpaceOps AI | Mission Deck", layout="wide")
     df, _scaler, anomaly_bundle, iforest, lstm_bundle = load_artifacts()
-    satellite_images = ensure_satellite_images()
+    satellite_catalog = get_real_satellite_catalog()
 
     st.sidebar.markdown("## Mission Controls")
     inject_css()
@@ -474,9 +453,13 @@ def main() -> None:
     mission_preset = st.sidebar.selectbox("Mission Profile", ["Nominal Ops", "Storm Watch", "Battery Stress", "Deep Space Cruise"], index=0)
     mission_mode = st.sidebar.radio("Control Mode", ["Auto", "Manual", "Emergency"], horizontal=True)
 
-    units = sorted(df["unit_id"].unique().tolist())
-    selected_unit = st.sidebar.selectbox("Satellite", units, format_func=lambda u: f"SAT-ALPHA-{u:02d}")
+    units = sorted(df["unit_id"].unique().tolist())[:6]
+    selected_unit = st.sidebar.selectbox("Telemetry Unit", units, format_func=lambda u: f"SAT-ALPHA-{u:02d}")
     live_mode = st.sidebar.toggle("Live Playback", value=False)
+
+    tracking_source = st.sidebar.selectbox("Tracking Source", ["Real TLE (CelesTrak)", "Simulated"], index=0)
+    tracked_satellite = st.sidebar.selectbox("Tracked Satellite", list(satellite_catalog.keys()), index=0)
+    norad_id = int(satellite_catalog[tracked_satellite]["norad"])
 
     colors = {
         "temperature": "#38BDF8",
@@ -513,7 +496,37 @@ def main() -> None:
     latest = current_df.iloc[-1]
 
     track_cycles = current_df["cycle"].to_numpy(dtype=np.float32)
-    lat, lon = compute_ground_track(track_cycles, selected_unit)
+
+    tracking_note = "Simulated orbital projection"
+    real_track_failed = False
+
+    if tracking_source == "Real TLE (CelesTrak)":
+        state = get_live_orbit_state(norad_id=norad_id)
+        if state is not None:
+            history_key = f"live_track_history_{norad_id}"
+            if history_key not in st.session_state:
+                st.session_state[history_key] = []
+
+            history = st.session_state[history_key]
+            history.append((state.latitude_deg, state.longitude_deg))
+            if len(history) > 180:
+                del history[:-180]
+
+            lat = np.array([pt[0] for pt in history], dtype=float)
+            lon = np.array([pt[1] for pt in history], dtype=float)
+            alt_km = float(state.altitude_km)
+            spd_kms = float(state.speed_kms)
+            tracking_note = f"Real tracking: {tracked_satellite} (NORAD {norad_id}) via {state.source}"
+        else:
+            real_track_failed = True
+            lat, lon = compute_ground_track(track_cycles, selected_unit)
+            alt_km = 540.0 + 8.0 * np.sin(float(latest["cycle"]) / 18)
+            spd_kms = 7.62 + 0.18 * np.cos(float(latest["cycle"]) / 13)
+            tracking_note = "Real TLE unavailable; fallback to simulated tracking"
+    else:
+        lat, lon = compute_ground_track(track_cycles, selected_unit)
+        alt_km = 540.0 + 8.0 * np.sin(float(latest["cycle"]) / 18)
+        spd_kms = 7.62 + 0.18 * np.cos(float(latest["cycle"]) / 13)
 
     feat_vec = latest[config.TELEMETRY_FEATURES].to_numpy(dtype=np.float32)
     anomaly_score = compute_anomaly_score(feat_vec, anomaly_bundle, iforest)
@@ -537,7 +550,7 @@ def main() -> None:
         f"""
 <div class="header-shell">
   <div class="header-title">SpaceOps AI Mission Deck</div>
-  <div class="header-sub">{mission_preset} | SAT-ALPHA-{selected_unit:02d} | {mission_mode} Control | Uplink: {'Live' if live_mode else 'Standby'} | {utc_now}</div>
+  <div class="header-sub">{mission_preset} | Telemetry: SAT-ALPHA-{selected_unit:02d} | Tracking: {tracked_satellite} | {mission_mode} Control | Uplink: {'Live' if live_mode else 'Standby'} | {utc_now}</div>
 </div>
 """,
         unsafe_allow_html=True,
@@ -609,20 +622,30 @@ def main() -> None:
 
     with tcol:
         st.plotly_chart(orbit_panel(int(latest["cycle"]), template=template), width="stretch")
-        st.plotly_chart(tracking_map(track_cycles, selected_unit, template=template), width="stretch")
+        st.plotly_chart(
+            tracking_map(track_cycles, selected_unit, template=template, lat_override=lat, lon_override=lon),
+            width="stretch",
+        )
 
-        selected_image = st.selectbox("Satellite Image", list(satellite_images.keys()), index=0)
-        st.image(satellite_images[selected_image], caption=selected_image, use_container_width=True)
+        st.image(
+            str(satellite_catalog[tracked_satellite]["image_url"]),
+            caption=f"{tracked_satellite} | {satellite_catalog[tracked_satellite]['credit']}",
+            use_container_width=True,
+        )
 
-        alt_km = 540.0 + 8.0 * np.sin(float(latest["cycle"]) / 18)
-        spd_kms = 7.62 + 0.18 * np.cos(float(latest["cycle"]) / 13)
+        if real_track_failed:
+            st.warning("Could not fetch live TLE data right now. Using simulated track.")
+
         g1, g2 = st.columns(2)
         g1.metric("Latitude", f"{float(lat[-1]):.2f} deg")
         g2.metric("Longitude", f"{float(lon[-1]):.2f} deg")
         g3, g4 = st.columns(2)
         g3.metric("Altitude", f"{alt_km:.1f} km")
         g4.metric("Ground Speed", f"{spd_kms:.2f} km/s")
-        st.markdown("<div class='card'><span class='led' style='color:#2DD4BF; background:#2DD4BF;'></span>Tracking stream active and synchronized.</div>", unsafe_allow_html=True)
+        st.markdown(
+            f"<div class='card'><span class='led' style='color:#2DD4BF; background:#2DD4BF;'></span>{tracking_note}</div>",
+            unsafe_allow_html=True,
+        )
 
     with icol:
         st.markdown("<div class='card'><div class='card-title'>Mission Impact Summary</div>", unsafe_allow_html=True)

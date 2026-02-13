@@ -21,7 +21,9 @@ Satellite operations teams need early warning and clear actions, not just raw te
   - Live/Replay/Prediction telemetry tabs
   - Recommendation console with urgency tag
   - Mission impact simulation
-  - Live satellite tracking + local satellite images
+  - Live satellite tracking (Real TLE via CelesTrak + simulated fallback)
+- NORAD satellite selector for real orbital position
+- Local satellite images for offline-safe UI rendering
 - Dark mode optimized UI
 
 ## Tech Stack
@@ -78,6 +80,15 @@ streamlit run app.py --server.address 127.0.0.1 --server.port 8501
 ```
 
 Open: [http://127.0.0.1:8501](http://127.0.0.1:8501)
+
+
+## Real Satellite Tracking
+
+The dashboard supports two tracking modes in the sidebar:
+- `Real TLE (CelesTrak)`: Fetches live TLE for a NORAD ID and computes current subpoint using Skyfield
+- `Simulated`: Deterministic fallback track for offline/demo reliability
+
+Default NORAD ID is `25544` (ISS).
 
 ## Data
 
