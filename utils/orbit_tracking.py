@@ -7,11 +7,13 @@ or dependencies are unavailable.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 
 import requests
 
+LOGGER = logging.getLogger(__name__)
 
 TLE_URL = "https://celestrak.org/NORAD/elements/gp.php?CATNR={norad_id}&FORMAT=TLE"
 
@@ -42,7 +44,7 @@ def _fetch_tle_lines(norad_id: int, timeout_sec: float = 8.0) -> tuple[str, str]
     return tle_lines[0], tle_lines[1]
 
 
-def get_live_orbit_state(norad_id: int = 25544) -> Optional[OrbitState]:
+def get_live_orbit_state(norad_id: int = 25544, timeout_sec: float = 8.0) -> Optional[OrbitState]:
     """Compute real-time subpoint and speed from latest CelesTrak TLE.
 
     Returns None on any dependency/network/data error.
@@ -50,10 +52,11 @@ def get_live_orbit_state(norad_id: int = 25544) -> Optional[OrbitState]:
     try:
         from skyfield.api import EarthSatellite, load
     except Exception:
+        LOGGER.debug("Skyfield import failed; live orbit state unavailable", exc_info=True)
         return None
 
     try:
-        l1, l2 = _fetch_tle_lines(norad_id)
+        l1, l2 = _fetch_tle_lines(norad_id, timeout_sec=timeout_sec)
         ts = load.timescale()
         t = ts.now()
 
@@ -78,4 +81,5 @@ def get_live_orbit_state(norad_id: int = 25544) -> Optional[OrbitState]:
             speed_kms=speed_kms,
         )
     except Exception:
+        LOGGER.warning("Failed to compute live orbit state for NORAD %s", norad_id, exc_info=True)
         return None

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+import logging
 from datetime import datetime, timezone
 import joblib
 import numpy as np
@@ -13,11 +14,15 @@ import torch
 from torch import nn
 
 import config
+from core.logging_config import setup_logging
+from core.settings import RuntimeSettings
 import preprocess
 from recommendation_engine import generate_recommendation
 from train_lstm import LSTMRegressor
 from utils.orbit_tracking import get_live_orbit_state
 
+
+LOGGER = logging.getLogger(__name__)
 
 class Autoencoder(nn.Module):
     """Inference mirror of the anomaly autoencoder."""
@@ -438,8 +443,12 @@ def inject_css() -> None:
 
 
 def main() -> None:
+    settings = RuntimeSettings.from_env()
+    setup_logging(settings.log_level)
+
     st.set_page_config(page_title="SpaceOps AI | Mission Deck", layout="wide")
     df, _scaler, anomaly_bundle, iforest, lstm_bundle = load_artifacts()
+    LOGGER.info("Dashboard initialized | env=%s", settings.app_env)
     satellite_catalog = get_real_satellite_catalog()
 
     st.sidebar.markdown("## Mission Controls")
@@ -489,7 +498,7 @@ def main() -> None:
     if live_mode:
         current_idx = min(current_idx + 1, max_idx)
         st.session_state.live_idx = current_idx
-        time.sleep(0.11)
+        time.sleep(settings.live_refresh_seconds)
         st.rerun()
 
     current_df = unit_df.iloc[: current_idx + 1].copy()
@@ -501,7 +510,7 @@ def main() -> None:
     real_track_failed = False
 
     if tracking_source == "Real TLE (CelesTrak)":
-        state = get_live_orbit_state(norad_id=norad_id)
+        state = get_live_orbit_state(norad_id=norad_id, timeout_sec=settings.tle_timeout_seconds)
         if state is not None:
             history_key = f"live_track_history_{norad_id}"
             if history_key not in st.session_state:
@@ -509,20 +518,22 @@ def main() -> None:
 
             history = st.session_state[history_key]
             history.append((state.latitude_deg, state.longitude_deg))
-            if len(history) > 180:
-                del history[:-180]
+            if len(history) > settings.tle_history_limit:
+                del history[:-settings.tle_history_limit]
 
             lat = np.array([pt[0] for pt in history], dtype=float)
             lon = np.array([pt[1] for pt in history], dtype=float)
             alt_km = float(state.altitude_km)
             spd_kms = float(state.speed_kms)
             tracking_note = f"Real tracking: {tracked_satellite} (NORAD {norad_id}) via {state.source}"
+            LOGGER.info("Live tracking OK | satellite=%s norad=%s", tracked_satellite, norad_id)
         else:
             real_track_failed = True
             lat, lon = compute_ground_track(track_cycles, selected_unit)
             alt_km = 540.0 + 8.0 * np.sin(float(latest["cycle"]) / 18)
             spd_kms = 7.62 + 0.18 * np.cos(float(latest["cycle"]) / 13)
             tracking_note = "Real TLE unavailable; fallback to simulated tracking"
+            LOGGER.warning("Live tracking fallback to simulation | norad=%s", norad_id)
     else:
         lat, lon = compute_ground_track(track_cycles, selected_unit)
         alt_km = 540.0 + 8.0 * np.sin(float(latest["cycle"]) / 18)

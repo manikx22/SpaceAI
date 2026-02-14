@@ -23,7 +23,7 @@ Satellite operations teams need early warning and clear actions, not just raw te
   - Mission impact simulation
   - Live satellite tracking (Real TLE via CelesTrak + simulated fallback)
 - NORAD satellite selector for real orbital position
-- Local satellite images for offline-safe UI rendering
+- Real satellite images (publicly licensed sources)
 - Dark mode optimized UI
 
 ## Tech Stack
@@ -85,10 +85,27 @@ Open: [http://127.0.0.1:8501](http://127.0.0.1:8501)
 ## Real Satellite Tracking
 
 The dashboard supports two tracking modes in the sidebar:
-- `Real TLE (CelesTrak)`: Fetches live TLE for a NORAD ID and computes current subpoint using Skyfield
+- `Real TLE (CelesTrak)`: Fetches live TLE and computes current subpoint using Skyfield
 - `Simulated`: Deterministic fallback track for offline/demo reliability
 
-Default NORAD ID is `25544` (ISS).
+Curated real satellites currently included:
+- International Space Station (NORAD 25544)
+- Hubble Space Telescope (NORAD 20580)
+
+## Runtime Environment Variables
+
+Optional environment overrides:
+- `SPACEOPS_APP_ENV` (default: `dev`)
+- `SPACEOPS_LOG_LEVEL` (default: `INFO`)
+- `SPACEOPS_LIVE_REFRESH_SECONDS` (default: `0.11`)
+- `SPACEOPS_TLE_TIMEOUT_SECONDS` (default: `8.0`)
+- `SPACEOPS_TLE_HISTORY_LIMIT` (default: `180`)
+
+Example:
+
+```bash
+SPACEOPS_LOG_LEVEL=DEBUG SPACEOPS_TLE_TIMEOUT_SECONDS=12 streamlit run app.py
+```
 
 ## Data
 
