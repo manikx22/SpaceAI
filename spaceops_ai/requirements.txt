@@ -5,3 +5,7 @@ torch
 streamlit
 plotly
 joblib
+pytest
+fastapi
+uvicorn
+httpx

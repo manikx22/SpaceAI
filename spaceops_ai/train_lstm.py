@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+import json
 import numpy as np
 import torch
 from torch import nn
@@ -108,6 +110,17 @@ def main() -> None:
     }
 
     torch.save(checkpoint, config.LSTM_MODEL_PATH)
+    report = {
+        "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "model": "lstm_rul",
+        "window_size": config.WINDOW_SIZE,
+        "epochs": config.LSTM_EPOCHS,
+        "features": config.TELEMETRY_FEATURES,
+        "metrics": metrics,
+        "train_samples": int(len(X_train)),
+        "val_samples": int(len(X_val)),
+    }
+    config.LSTM_REPORT_PATH.write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(f"Saved LSTM model to {config.LSTM_MODEL_PATH}")
     print(
         "Validation metrics: "

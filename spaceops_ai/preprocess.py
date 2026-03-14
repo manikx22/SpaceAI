@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Tuple
+import json
 
 import numpy as np
 import pandas as pd
@@ -12,6 +13,7 @@ import joblib
 
 import config
 from utils.io_utils import ensure_dirs
+from utils.data_quality import build_quality_report, sanitize_frame
 
 
 def _find_cmapss_file() -> Path | None:
@@ -126,6 +128,8 @@ def main() -> None:
 
     scaler = MinMaxScaler()
     telemetry[config.TELEMETRY_FEATURES] = scaler.fit_transform(telemetry[config.TELEMETRY_FEATURES])
+    telemetry = sanitize_frame(telemetry, config.TELEMETRY_FEATURES)
+    quality = build_quality_report(telemetry, config.TELEMETRY_FEATURES)
 
     X, y, units = _create_windows(telemetry, config.WINDOW_SIZE)
 
@@ -134,10 +138,17 @@ def main() -> None:
     np.save(config.LSTM_X_PATH, X)
     np.save(config.LSTM_Y_PATH, y)
     np.save(config.UNIT_INDEX_PATH, units)
+    config.DATA_QUALITY_REPORT_PATH.write_text(json.dumps(quality.to_dict(), indent=2), encoding="utf-8")
 
     print(f"Saved processed telemetry: {config.PROCESSED_CSV_PATH}")
     print(f"Saved scaler: {config.SCALER_PATH}")
     print(f"Saved LSTM windows: X={X.shape}, y={y.shape}")
+    print(f"Saved data quality report: {config.DATA_QUALITY_REPORT_PATH}")
+    print(
+        "Data quality: "
+        f"score={quality.quality_score:.1f}, null_cells={quality.null_cells}, "
+        f"duplicates={quality.duplicate_rows}, out_of_range={quality.out_of_range_cells}"
+    )
 
 
 if __name__ == "__main__":

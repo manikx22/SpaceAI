@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+import json
 import numpy as np
 import pandas as pd
 import torch
@@ -87,6 +89,16 @@ def train_autoencoder(df: pd.DataFrame) -> None:
         "threshold": threshold,
     }
     torch.save(payload, config.ANOMALY_MODEL_PATH)
+    report = {
+        "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "model": "autoencoder",
+        "threshold": threshold,
+        "epochs": config.ANOMALY_EPOCHS,
+        "features": config.TELEMETRY_FEATURES,
+        "samples": int(len(df)),
+        "final_loss": float(np.mean(epoch_losses)) if epoch_losses else None,
+    }
+    config.ANOMALY_REPORT_PATH.write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(f"Saved autoencoder model to {config.ANOMALY_MODEL_PATH}")
     print(f"Anomaly threshold (p{config.ANOMALY_THRESHOLD_PERCENTILE}): {threshold:.6f}")
 
