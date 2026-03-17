@@ -1,5 +1,6 @@
 """Central configuration for SpaceOps AI."""
 
+import os
 from pathlib import Path
 
 # Base paths
@@ -28,6 +29,8 @@ ALERT_HISTORY_PATH = PROCESSED_DATA_DIR / "alert_history.json"
 ANOMALY_REPORT_PATH = PROCESSED_DATA_DIR / "anomaly_training_report.json"
 LSTM_REPORT_PATH = PROCESSED_DATA_DIR / "lstm_training_report.json"
 SPACE_WEATHER_CACHE_PATH = PROCESSED_DATA_DIR / "space_weather_cache.json"
+API_AUDIT_LOG_PATH = PROCESSED_DATA_DIR / "api_audit_log.jsonl"
+MODEL_MANIFEST_PATH = PROCESSED_DATA_DIR / "model_manifest.json"
 
 # Model artifacts
 ANOMALY_MODEL_PATH = MODELS_DIR / "anomaly_autoencoder.pt"
@@ -82,3 +85,9 @@ ALERT_HISTORY_LIMIT = 300
 
 # Explainability / digital twin
 TOP_EXPLANATION_FACTORS = 3
+
+# API/runtime controls
+API_KEY = os.getenv("SPACEOPS_API_KEY", "").strip()
+REQUIRE_API_KEY = bool(API_KEY)
+MAX_TELEMETRY_BATCH = int(os.getenv("SPACEOPS_MAX_TELEMETRY_BATCH", "512"))
+DEPLOYMENT_ENV = os.getenv("SPACEOPS_ENV", "development").strip() or "development"

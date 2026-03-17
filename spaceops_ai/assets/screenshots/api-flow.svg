@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#030816"/>
+  <text x="70" y="90" fill="#e2e8f0" font-size="42" font-family="Orbitron, Arial">SpaceOps AI API</text>
+  <text x="70" y="130" fill="#7dd3fc" font-size="20" font-family="Rajdhani, Arial">Inference and simulation workflow</text>
+  <rect x="90" y="230" width="260" height="160" rx="22" fill="#0c1830" stroke="#1ec9ff" stroke-opacity="0.4"/>
+  <rect x="470" y="230" width="260" height="160" rx="22" fill="#0c1830" stroke="#1ec9ff" stroke-opacity="0.4"/>
+  <rect x="850" y="230" width="260" height="160" rx="22" fill="#0c1830" stroke="#1ec9ff" stroke-opacity="0.4"/>
+  <rect x="1230" y="230" width="260" height="160" rx="22" fill="#0c1830" stroke="#1ec9ff" stroke-opacity="0.4"/>
+  <text x="135" y="290" fill="#7dd3fc" font-size="22" font-family="Orbitron, Arial">Telemetry JSON</text>
+  <text x="520" y="290" fill="#7dd3fc" font-size="22" font-family="Orbitron, Arial">/predict</text>
+  <text x="892" y="290" fill="#7dd3fc" font-size="22" font-family="Orbitron, Arial">AI Pipeline</text>
+  <text x="1268" y="290" fill="#7dd3fc" font-size="22" font-family="Orbitron, Arial">Mission Output</text>
+  <text x="130" y="330" fill="#e2e8f0" font-size="20" font-family="Rajdhani, Arial">temperature</text>
+  <text x="130" y="360" fill="#e2e8f0" font-size="20" font-family="Rajdhani, Arial">voltage</text>
+  <text x="130" y="390" fill="#e2e8f0" font-size="20" font-family="Rajdhani, Arial">vibration</text>
+  <text x="505" y="340" fill="#e2e8f0" font-size="20" font-family="Rajdhani, Arial">/health</text>
+  <text x="505" y="370" fill="#e2e8f0" font-size="20" font-family="Rajdhani, Arial">/predict</text>
+  <text x="505" y="400" fill="#e2e8f0" font-size="20" font-family="Rajdhani, Arial">/simulate</text>
+  <text x="885" y="330" fill="#e2e8f0" font-size="20" font-family="Rajdhani, Arial">Anomaly Detection</text>
+  <text x="885" y="360" fill="#e2e8f0" font-size="20" font-family="Rajdhani, Arial">RUL Forecasting</text>
+  <text x="885" y="390" fill="#e2e8f0" font-size="20" font-family="Rajdhani, Arial">Recommendation + Twin</text>
+  <text x="1260" y="330" fill="#e2e8f0" font-size="20" font-family="Rajdhani, Arial">Health State</text>
+  <text x="1260" y="360" fill="#e2e8f0" font-size="20" font-family="Rajdhani, Arial">Fault Type</text>
+  <text x="1260" y="390" fill="#e2e8f0" font-size="20" font-family="Rajdhani, Arial">Action + Impact</text>
+  <line x1="350" y1="310" x2="470" y2="310" stroke="#00e5ff" stroke-width="4"/>
+  <line x1="730" y1="310" x2="850" y2="310" stroke="#00e5ff" stroke-width="4"/>
+  <line x1="1110" y1="310" x2="1230" y2="310" stroke="#00e5ff" stroke-width="4"/>
+  <rect x="150" y="560" width="1300" height="200" rx="24" fill="#071126" stroke="#7c3aed" stroke-opacity="0.45"/>
+  <text x="190" y="620" fill="#7dd3fc" font-size="24" font-family="Orbitron, Arial">Sample response</text>
+  <text x="190" y="675" fill="#e2e8f0" font-size="22" font-family="Rajdhani, Arial">{ "health_state": "WARNING", "fault_class": "Power Bus Instability",</text>
+  <text x="190" y="710" fill="#e2e8f0" font-size="22" font-family="Rajdhani, Arial">  "failure_risk_pct": 61.4, "recommendation": "...", "digital_twin": { "risk_after": 47.2 } }</text>
+</svg>

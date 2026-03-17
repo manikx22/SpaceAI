@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import config
 import preprocess
 from utils.io_utils import ensure_dirs, exists_all
+from utils.model_registry import persist_manifest
 
 
 class LSTMRegressor(nn.Module):
@@ -127,6 +128,7 @@ def main() -> None:
         f"MSE={metrics['mse']:.3f}, RMSE={metrics['rmse']:.3f}, "
         f"MAE={metrics['mae']:.3f}, R2={metrics['r2']:.3f}"
     )
+    persist_manifest()
 
 
 if __name__ == "__main__":

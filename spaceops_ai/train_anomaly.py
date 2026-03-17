@@ -15,6 +15,7 @@ import joblib
 import config
 import preprocess
 from utils.io_utils import ensure_dirs, exists_all
+from utils.model_registry import persist_manifest
 
 
 class Autoencoder(nn.Module):
@@ -126,6 +127,7 @@ def main() -> None:
     # Always keep fallback model available for production resiliency.
     if not config.ANOMALY_IFOREST_PATH.exists():
         train_isolation_forest(df)
+    persist_manifest()
 
 
 if __name__ == "__main__":

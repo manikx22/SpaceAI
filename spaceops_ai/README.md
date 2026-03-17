@@ -1,94 +1,113 @@
 # SpaceOps AI
 
-SpaceOps AI is an end-to-end satellite health intelligence platform that predicts faults from telemetry time-series data, explains why risk is rising, simulates corrective actions, and recommends self-healing responses through an operations dashboard and API.
+SpaceOps AI is a satellite health intelligence platform built to solve a real operations problem: how to detect faults early from telemetry, estimate failure progression, explain why risk is increasing, and recommend corrective action before a mission-impacting event occurs.
 
-## Core Problem
+It combines anomaly detection, Remaining Useful Life forecasting, explainable AI, digital twin simulation, drift monitoring, live orbit-aware context, and a mission-control dashboard in one deployable project.
 
-Satellites generate continuous telemetry, but mission teams need more than raw charts. The core problem solved here is:
+## Why this project stands out
 
-- detect abnormal behavior early from telemetry sequences
-- estimate how close the system is to failure
-- explain the likely cause
-- recommend a corrective action
-- simulate the likely mission impact of that action
+- Multistage AI pipeline instead of a single prediction model
+- Explainable fault analysis, not just raw risk scores
+- Digital twin simulation to test actions before execution
+- Dashboard plus API plus Docker packaging
+- Live orbit-derived telemetry and space weather context
+- Strong engineering layer with tests, reports, monitoring, and reusable inference code
 
-The project uses NASA CMAPSS turbofan data as a proxy for satellite subsystem telemetry, with live orbit-derived telemetry and space weather overlays for mission-style monitoring.
+## Screenshots
 
-Core capabilities:
-- Data pipeline: load, normalize, label RUL, generate LSTM windows
-- Anomaly detection: PyTorch autoencoder with IsolationForest fallback
-- Failure prediction: PyTorch LSTM for Remaining Useful Life (RUL)
-- Recommendation engine: rule-based corrective actions with confidence
-- Fault staging: health state, fault class, severity estimation
-- Explainable AI: top contributing telemetry drivers and textual reasoning
-- Digital twin: simulate the effect of the chosen action before execution
-- Event timeline: mission incident replay from ingest to impact review
-- Scenario engine: solar storm, battery drain, thermal spike, comms noise
-- Monitoring layer: drift detection, alert history, training reports
-- Dashboard: mission-control UI, live telemetry visualization, anomaly alerts, failure risk, recommendations, live ISS tracking, space weather overlay, and mission impact simulation
-- REST API: FastAPI inference endpoint for programmatic prediction and health checks
-- Packaging: Docker support for dashboard and API deployment
+### Dashboard Overview
+![Dashboard Overview](/Users/manikx22/Documents/SpaceAI/spaceops_ai/assets/screenshots/dashboard-overview.svg)
+
+### API and Inference Flow
+![API Flow](/Users/manikx22/Documents/SpaceAI/spaceops_ai/assets/screenshots/api-flow.svg)
+
+### System Architecture
+![System Architecture](/Users/manikx22/Documents/SpaceAI/spaceops_ai/assets/screenshots/system-architecture.svg)
+
+## Core problem solved
+
+Satellite telemetry is high-volume and hard to interpret in real time. Operators need help answering five questions quickly:
+
+1. Is the system behaving abnormally?
+2. How close is it to failure?
+3. What is likely causing the problem?
+4. What should be done now?
+5. What will happen if that action is taken?
+
+SpaceOps AI answers all five through a single mission-ops workflow.
+
+## Key features
+
+- Data pipeline using NASA CMAPSS as a proxy for spacecraft telemetry
+- Anomaly detection using a PyTorch autoencoder with Isolation Forest fallback
+- LSTM-based Remaining Useful Life prediction
+- Fault class and severity staging
+- Explainability layer with top driver analysis
+- Rule-based self-healing recommendation engine
+- Digital twin action simulation
+- Scenario engine for solar storm, thermal spike, battery drain, and comms noise
+- Drift monitoring and persistent alert history
+- Live orbit tracking and space weather overlay
+- Streamlit mission-control dashboard
+- FastAPI inference and simulation API
+- Authenticated API mode, request tracing, manifest reporting, and audit logging
+- Docker packaging for deployment
+
+## Repository structure
+
+```text
+spaceops_ai/
+├── app.py
+├── api.py
+├── preprocess.py
+├── train_anomaly.py
+├── train_lstm.py
+├── recommendation_engine.py
+├── config.py
+├── Dockerfile
+├── requirements.txt
+├── assets/
+│   └── screenshots/
+├── docs/
+│   ├── ARCHITECTURE.md
+│   └── PORTFOLIO.md
+├── tests/
+├── utils/
+├── data/
+│   ├── raw/
+│   └── processed/
+└── models/
+```
 
 ## Architecture
-
-- `preprocess.py`: data ingestion, synthetic fallback generation, MinMax scaling, quality checks, RUL/sequence creation
-- `train_anomaly.py`: autoencoder anomaly model training and anomaly report generation
-- `train_lstm.py`: LSTM RUL regression training, metrics, and training report generation
-- `recommendation_engine.py`: self-healing rule evaluation
-- `utils/explainability.py`: fault class, severity, and top-driver explanation
-- `utils/digital_twin.py`: action simulation and outcome comparison
-- `utils/scenario_engine.py`: mission scenario stress injection
-- `utils/mission_timeline.py`: replay/event sequence generation
-- `utils/space_weather.py`: live NOAA space weather overlay with fallback cache
-- `api.py`: FastAPI inference and simulation API
-- `app.py`: Streamlit mission operations UI
-- `config.py`: central paths, thresholds, and hyperparameters
 
 ```mermaid
 flowchart LR
     A["Telemetry Source"] --> B["Preprocess + Quality Checks"]
-    B --> C["Anomaly Model"]
-    B --> D["LSTM RUL Model"]
+    B --> C["Anomaly Detection"]
+    B --> D["LSTM Failure Forecast"]
     B --> E["Drift Monitor"]
     C --> F["Fault Stage + Severity"]
     D --> F
     E --> F
-    F --> G["Explainability Engine"]
+    F --> G["Explainability"]
     F --> H["Recommendation Engine"]
     H --> I["Digital Twin Simulation"]
     G --> J["Dashboard + API"]
     I --> J
 ```
 
-## Project Structure
+More detail: [ARCHITECTURE.md](/Users/manikx22/Documents/SpaceAI/spaceops_ai/docs/ARCHITECTURE.md)
 
-```
-spaceops_ai/
-├ data/
-│  ├ raw/
-│  └ processed/
-├ models/
-├ training/
-├ dashboard/
-├ utils/
-├ app.py
-├ api.py
-├ train_anomaly.py
-├ train_lstm.py
-├ preprocess.py
-├ recommendation_engine.py
-├ config.py
-├ requirements.txt
-└ README.md
-```
+## Quick start
 
-## Setup
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Run Training
+Train models:
 
 ```bash
 python preprocess.py
@@ -96,105 +115,104 @@ python train_anomaly.py
 python train_lstm.py
 ```
 
-Notes:
-- To use NASA CMAPSS real data, place `train_FD001.txt` in `data/raw/`.
-- If CMAPSS is missing, synthetic telemetry is generated automatically.
-- Training now saves model reports in `data/processed/`.
-
-## Launch Dashboard
+Launch dashboard:
 
 ```bash
-streamlit run app.py
+streamlit run app.py --server.address 127.0.0.1 --server.port 8501
 ```
 
-## Launch API
+Launch API:
 
 ```bash
 uvicorn api:app --host 0.0.0.0 --port 8000
 ```
 
-API endpoints:
-- `GET /health`
-- `POST /predict`
-- `POST /simulate`
+Optional authenticated API mode:
 
-Notes:
-- The dashboard uses a single dark mission-control theme.
-- Real-time tracking is enabled for ISS (`NORAD 25544`) using a public live feed.
-- If network/API access is unavailable, the app automatically switches to cached or simulated fallback sources and shows a warning banner.
-- `Telemetry Feed` supports:
-  - `Saved Data`: replay model data windows from processed dataset
-  - `Live Orbit Data`: derive model-ready telemetry from live orbital samples and cache under `data/processed/live_telemetry_cache.json`
-- Use **Download Mission Report (JSON)** in the Mission Impact panel to export a resume/demo-ready report snapshot.
-- Use **One-Click Retrain Models** in the AI panel to run preprocess + anomaly training + LSTM training from the UI.
-- Alert history is persisted in `data/processed/alert_history.json`.
-- Space weather is integrated through NOAA SWPC with cache fallback.
-- Scenario presets and digital twin panels are available in the dashboard.
+```bash
+export SPACEOPS_API_KEY="replace-with-your-token"
+uvicorn api:app --host 0.0.0.0 --port 8000
+```
 
-## Run Tests
+Run tests:
 
 ```bash
 pytest -q
 ```
 
-## Docker
+## API
 
-Build:
+- `GET /health`
+- `GET /health/live`
+- `GET /health/ready`
+- `GET /manifest`
+- `GET /audit/recent`
+- `POST /predict`
+- `POST /simulate`
+
+The API returns health state, failure risk, RUL, recommendation, explainability details, and digital twin comparison.
+When `SPACEOPS_API_KEY` is set, `/manifest`, `/audit/recent`, `/predict`, and `/simulate` require the `X-API-Key` header.
+
+## Data sources
+
+- NASA CMAPSS turbofan dataset used as a structured proxy for satellite telemetry
+- Live ISS orbit position feed for real-time orbit-aware telemetry derivation
+- NOAA space weather feed with local cache fallback
+
+If CMAPSS is not available locally, the project automatically generates synthetic telemetry so the platform remains runnable.
+
+## Evaluation and reports
+
+The platform stores runtime and training evidence in `data/processed/`, including:
+
+- data quality report
+- anomaly model training report
+- LSTM validation report
+- model manifest
+- API audit log
+- alert history
+- live telemetry cache
+- space weather cache
+
+## Deployment
+
+Build Docker image:
 
 ```bash
 docker build -t spaceops-ai .
 ```
 
-Run dashboard:
+Run dashboard container:
 
 ```bash
 docker run -p 8501:8501 spaceops-ai
 ```
 
-Run API:
+Run API container:
 
 ```bash
 docker run -p 8000:8000 --entrypoint uvicorn spaceops-ai api:app --host 0.0.0.0 --port 8000
 ```
 
-## Output Artifacts
+## Portfolio use
 
-- Processed data: `data/processed/telemetry_processed.csv`
-- Scaler: `data/processed/telemetry_scaler.joblib`
-- LSTM windows: `data/processed/lstm_X.npy`, `data/processed/lstm_y.npy`
-- Data quality report: `data/processed/data_quality_report.json`
-- Alert history: `data/processed/alert_history.json`
-- Space weather cache: `data/processed/space_weather_cache.json`
-- Anomaly training report: `data/processed/anomaly_training_report.json`
-- LSTM training report: `data/processed/lstm_training_report.json`
-- Anomaly model: `models/anomaly_autoencoder.pt`
-- Fallback anomaly model: `models/anomaly_iforest.joblib`
-- Failure model: `models/lstm_failure_model.pt`
+Portfolio positioning notes and resume bullets are in [PORTFOLIO.md](/Users/manikx22/Documents/SpaceAI/spaceops_ai/docs/PORTFOLIO.md).
 
-## Evaluation
+Short version:
 
-- Anomaly model: reconstruction threshold saved from trained autoencoder
-- Failure model: MSE, RMSE, MAE, and R2 saved in the LSTM training report
-- System quality: preprocess quality score, drift score, alert history, retraining reports
-
-## Research Value
-
-- Multistage AI pipeline instead of a single prediction head
-- Explainable AI for operational trust
-- Digital twin action simulation
-- Scenario-based stress testing
-- Live orbit and space weather context
-- Dashboard + API + Docker packaging for deployment
+- Built an AI-driven satellite health intelligence platform for telemetry anomaly detection, failure forecasting, explainable fault analysis, autonomous recommendation generation, and digital twin action simulation.
+- Delivered both a mission-control dashboard and an API service using PyTorch, Streamlit, FastAPI, and Docker.
 
 ## Limitations
 
-- CMAPSS is a proxy dataset, not true spacecraft telemetry
-- Live telemetry is partly derived from orbit state rather than full subsystem feeds
-- Recommendation engine is rule-based, not yet policy-learned
+- CMAPSS is a proxy dataset, not true spacecraft bus telemetry
+- Live telemetry is orbit-derived, not a complete real satellite subsystem stream
+- Recommendation logic is rule-based, not learned from historical operator action data
+- This is production-oriented software engineering, not a flight-certified aerospace control stack
 
-## Future Work
+## Future direction
 
-- Real spacecraft bus telemetry integration
-- Fault classification model trained on labeled satellite incidents
+- Real satellite bus telemetry ingestion
+- Learned fault classification with labeled mission incidents
 - Reinforcement learning for autonomous recovery strategy
-- Multi-satellite fleet monitoring
+- Multi-satellite fleet orchestration

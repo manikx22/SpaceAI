@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+import config
 from api import app
 
 
@@ -23,6 +24,21 @@ def test_health_endpoint() -> None:
     payload = response.json()
     assert payload["status"] == "ok"
     assert payload["artifacts"]["lstm_model"] is True
+    assert "ready" in payload
+
+
+def test_readiness_and_manifest_endpoints() -> None:
+    ready = client.get("/health/ready")
+    assert ready.status_code == 200
+    ready_payload = ready.json()
+    assert ready_payload["status"] in {"ready", "degraded"}
+    assert "checks" in ready_payload
+
+    manifest = client.get("/manifest")
+    assert manifest.status_code == 200
+    manifest_payload = manifest.json()
+    assert manifest_payload["service"] == "SpaceOps AI"
+    assert "artifacts" in manifest_payload
 
 
 def test_predict_endpoint() -> None:
@@ -49,6 +65,12 @@ def test_predict_endpoint() -> None:
     assert "recommendation" in body
     assert "digital_twin" in body
     assert "explainability" in body
+    assert "request_id" in body
+
+    audit = client.get("/audit/recent")
+    assert audit.status_code == 200
+    audit_payload = audit.json()
+    assert len(audit_payload["events"]) >= 1
 
 
 def test_simulate_endpoint() -> None:
@@ -75,3 +97,20 @@ def test_simulate_endpoint() -> None:
     assert "before" in body
     assert "after" in body
     assert "digital_twin" in body
+    assert "request_id" in body
+
+
+def test_api_key_guard_when_enabled() -> None:
+    previous_flag = config.REQUIRE_API_KEY
+    previous_key = config.API_KEY
+    config.REQUIRE_API_KEY = True
+    config.API_KEY = "secret-token"
+    try:
+        unauthorized = client.get("/manifest")
+        assert unauthorized.status_code == 401
+
+        authorized = client.get("/manifest", headers={"X-API-Key": "secret-token"})
+        assert authorized.status_code == 200
+    finally:
+        config.REQUIRE_API_KEY = previous_flag
+        config.API_KEY = previous_key

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="920" viewBox="0 0 1600 920">
+  <rect width="1600" height="920" fill="#020617"/>
+  <text x="70" y="90" fill="#e2e8f0" font-size="42" font-family="Orbitron, Arial">System Architecture</text>
+  <text x="70" y="130" fill="#7dd3fc" font-size="20" font-family="Rajdhani, Arial">End-to-end flow from telemetry to autonomous action support</text>
+  <rect x="80" y="210" width="240" height="110" rx="20" fill="#0c1830" stroke="#1ec9ff" stroke-opacity="0.35"/>
+  <rect x="400" y="210" width="240" height="110" rx="20" fill="#0c1830" stroke="#1ec9ff" stroke-opacity="0.35"/>
+  <rect x="720" y="210" width="240" height="110" rx="20" fill="#0c1830" stroke="#1ec9ff" stroke-opacity="0.35"/>
+  <rect x="1040" y="210" width="240" height="110" rx="20" fill="#0c1830" stroke="#1ec9ff" stroke-opacity="0.35"/>
+  <rect x="1360" y="210" width="180" height="110" rx="20" fill="#0c1830" stroke="#1ec9ff" stroke-opacity="0.35"/>
+  <text x="125" y="272" fill="#e2e8f0" font-size="24" font-family="Rajdhani, Arial">CMAPSS / Live Orbit</text>
+  <text x="475" y="272" fill="#e2e8f0" font-size="24" font-family="Rajdhani, Arial">Preprocess + Quality</text>
+  <text x="787" y="272" fill="#e2e8f0" font-size="24" font-family="Rajdhani, Arial">AI Models</text>
+  <text x="1082" y="272" fill="#e2e8f0" font-size="24" font-family="Rajdhani, Arial">Decision Layer</text>
+  <text x="1412" y="272" fill="#e2e8f0" font-size="24" font-family="Rajdhani, Arial">UI / API</text>
+  <line x1="320" y1="265" x2="400" y2="265" stroke="#00e5ff" stroke-width="4"/>
+  <line x1="640" y1="265" x2="720" y2="265" stroke="#00e5ff" stroke-width="4"/>
+  <line x1="960" y1="265" x2="1040" y2="265" stroke="#00e5ff" stroke-width="4"/>
+  <line x1="1280" y1="265" x2="1360" y2="265" stroke="#00e5ff" stroke-width="4"/>
+  <rect x="180" y="470" width="280" height="120" rx="20" fill="#101a2d" stroke="#7c3aed" stroke-opacity="0.45"/>
+  <rect x="520" y="470" width="280" height="120" rx="20" fill="#101a2d" stroke="#7c3aed" stroke-opacity="0.45"/>
+  <rect x="860" y="470" width="280" height="120" rx="20" fill="#101a2d" stroke="#7c3aed" stroke-opacity="0.45"/>
+  <rect x="1200" y="470" width="280" height="120" rx="20" fill="#101a2d" stroke="#7c3aed" stroke-opacity="0.45"/>
+  <text x="220" y="538" fill="#e2e8f0" font-size="24" font-family="Rajdhani, Arial">Explainability</text>
+  <text x="545" y="538" fill="#e2e8f0" font-size="24" font-family="Rajdhani, Arial">Recommendation Engine</text>
+  <text x="932" y="538" fill="#e2e8f0" font-size="24" font-family="Rajdhani, Arial">Digital Twin</text>
+  <text x="1266" y="538" fill="#e2e8f0" font-size="24" font-family="Rajdhani, Arial">Monitoring + Alerts</text>
+  <line x1="320" y1="320" x2="320" y2="470" stroke="#ff6b00" stroke-width="4"/>
+  <line x1="660" y1="320" x2="660" y2="470" stroke="#ff6b00" stroke-width="4"/>
+  <line x1="1000" y1="320" x2="1000" y2="470" stroke="#ff6b00" stroke-width="4"/>
+  <line x1="1340" y1="320" x2="1340" y2="470" stroke="#ff6b00" stroke-width="4"/>
+  <text x="210" y="760" fill="#00ffa3" font-size="28" font-family="Orbitron, Arial">Outcome: early fault detection, interpretable risk, action testing, deployable system</text>
+</svg>
